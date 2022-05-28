@@ -1,0 +1,24 @@
+local runService = game:GetService("RunService")
+
+local playerPets = workspace:WaitForChild("PlayerPets")
+
+local offset = CFrame.new(7,2,0)
+
+local hoverSpeed = 2
+runService.RenderStepped:Connect(function()
+	for i, v in pairs(playerPets:GetChildren()) do
+		local folder = v
+		for _, pet in pairs(folder:GetChildren()) do
+			local plr = game.Players:FindFirstChild(folder.Name)
+			if plr ~= nil then
+				local char = plr.Character or nil
+				
+				if char ~= nil then
+					if pet:IsA("Model") then
+						pet:SetPrimaryPartCFrame(pet.PrimaryPart.CFrame:Lerp(char.PrimaryPart.CFrame * offset * CFrame.new(0,math.sin(tick() * hoverSpeed),0),0.1))
+ 					end
+				end
+			end
+		end
+	end
+end)
