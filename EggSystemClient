@@ -1,0 +1,14 @@
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local eggClient = require(replicatedStorage:WaitForChild("Egg_Module_Client"))
+
+local eggGUI = script.Parent:WaitForChild("EggGui")
+local petDisplay = eggGUI:WaitForChild("PetDisplay")
+
+replicatedStorage.Remotes.ClientHatch.OnClientEvent:Connect(function(eggName, PetName)
+	eggClient.Hatch_Egg(eggName, PetName)
+	petDisplay.Visible = true
+	eggGUI.Spinner.Visible = true
+	eggClient.PetViewport(petDisplay, PetName)
+	
+	_G.CreateNewTemplate(PetName.Name)
+end)
