@@ -1,0 +1,23 @@
+local Players = game:GetService("Players")
+
+wait(1)
+
+local function playerAdded(plr)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = plr
+	
+	local Coins = Instance.new("IntValue")
+	Coins.Name = "Coins"
+	Coins.Value = 0
+	Coins.Parent = leaderstats
+end
+
+Players.PlayerAdded:Connect(playerAdded)
+
+for _, player in next, Players:GetPlayers() do
+	coroutine.wrap(playerAdded)(player)
+end
+game.ReplicatedStorage.Remotes.Test.OnServerEvent:Connect(function(plr)
+	plr.leaderstats.Coins.Value += (1 * tonumber(plr.Multiplier.Value))
+end)
