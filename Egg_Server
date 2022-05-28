@@ -1,0 +1,97 @@
+local Players = game:GetService("Players")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local egg_Module_Server = require(replicatedStorage:WaitForChild("Egg_Module_Server"))
+
+repeat wait(1) until workspace:FindFirstChild("Eggs") and #workspace:FindFirstChild("Eggs"):GetChildren() >= 1
+
+local eggCooldowns = {}
+
+local function plrAdded(plr)
+	eggCooldowns[plr.Name] = false
+	local pets = Instance.new("Folder")
+	pets.Name = "Pets"
+	pets.Parent = plr
+	
+	local Multiplier = Instance.new("StringValue")
+	Multiplier.Name = "Multiplier"
+	Multiplier.Value = tostring(1)
+	Multiplier.Parent = plr
+end
+
+
+for _, plr in pairs(Players:GetPlayers()) do
+	coroutine.wrap(plrAdded)(plr)
+end
+
+local function choosePet(pets)
+	local Chance = math.random(1,100)
+	local Counter = 0
+	for _,pet in pairs(pets:GetChildren()) do
+		Counter = Counter + pet.Chance.Value
+		if Chance <= Counter then
+			return pet
+		end
+	end
+end
+
+for _, egg in next, workspace.Eggs:GetChildren() do
+	local proximity = egg_Module_Server.setUpEgg(egg.Name)
+	
+	proximity.Triggered:Connect(function(plr)
+		local result = egg_Module_Server.HatchEgg(plr, egg.Name)
+		
+		if result == true and not eggCooldowns[plr.Name] then
+			eggCooldowns[plr.Name] = true
+			local petFolder = game.ReplicatedStorage.Pets:FindFirstChild(egg.Name)
+			local randomPet = choosePet(petFolder)
+			
+			replicatedStorage.Remotes.ClientHatch:FireClient(plr, egg.Name, randomPet)
+			local val = Instance.new("StringValue")
+			val.Name = randomPet.Name
+			val.Parent = plr.Pets
+			wait(5)
+			eggCooldowns[plr.Name] = false
+			
+		else
+			print("Cannot Hatch")
+		end
+	end)
+end
+
+Players.PlayerRemoving:Connect(function(plr)
+	eggCooldowns[plr.Name] = nil
+end)
+
+replicatedStorage.Remotes.Equip.OnServerInvoke = function(player, petName)
+	if player.Pets:FindFirstChild(petName) then
+		if workspace.PlayerPets:FindFirstChild(player.Name) then
+			if #workspace.PlayerPets:FindFirstChild(player.Name):getChildren() > 0 then
+				workspace.PlayerPets:FindFirstChild(player.Name):ClearAllChildren()
+				player.Multiplier.Value = tostring(0)
+				return "Unequip"
+			else
+				local pet = replicatedStorage.Pets:FindFirstChild(petName, true)
+				if pet ~= nil then
+					local cloned = pet:Clone()
+					cloned.Parent = workspace.PlayerPets:FindFirstChild(player.Name)
+					for i, v in pairs(cloned:GetDescendants()) do
+						if v:IsA("BasePart") or v:IsA("UnionOperation") then
+							v.CastShadow = false
+						end
+					end
+					player.Multiplier.Value = cloned.Multiplier.Value
+				end
+				return "Equip"
+			end
+		end
+	else
+		player:Kick("You have been kicked for exploiting")
+	end
+end
+
+replicatedStorage.Remotes.UnequipAll.OnServerEvent:Connect(function(player)
+	if workspace.PlayerPets:FindFirstChild(player.Name) then
+		workspace.PlayerPets:FindFirstChild(player.Name):ClearAllChildren()
+		player.Multiplier.Value = tostring(0)
+	end
+end)
