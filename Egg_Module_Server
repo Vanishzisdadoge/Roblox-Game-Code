@@ -1,0 +1,38 @@
+local Players = game:GetService("Players")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local eggs = workspace:WaitForChild("Eggs")
+
+local module = {}
+
+function module.HatchEgg(plr, eggName)
+	
+	local eggModel = eggs[eggName]
+	local price = eggModel:FindFirstChild("Price").Value
+	local currency = eggModel:FindFirstChild("Currency").Value
+	
+	if plr.leaderstats[currency].Value >= price then
+		plr.leaderstats[currency].Value -= price
+
+		return true
+	else
+		return false
+	end
+	
+end
+
+function module.setUpEgg(eggName)
+	
+	local egg = eggs[eggName]
+	local hitbox = egg["Egg_Model"]["HitBox"]
+	local price = egg:FindFirstChild("Price").Value
+	local currency = egg:FindFirstChild("Currency").Value
+	
+	local proximity = script.TemplateProximity:Clone()
+	proximity.ActionText = "Hatch"
+	proximity.ObjectText = price.." "..currency
+	proximity.Parent = hitbox
+	
+	return proximity
+end
+
+return module
