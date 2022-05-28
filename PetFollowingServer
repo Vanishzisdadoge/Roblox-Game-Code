@@ -1,0 +1,13 @@
+game.Players.PlayerAdded:Connect(function(plr)
+	if not workspace.PlayerPets:FindFirstChild(plr.Name) then
+		local folder = Instance.new("Folder")
+		folder.Name = plr.Name
+		folder.Parent = workspace.PlayerPets
+	end
+end)
+
+game.Players.PlayerRemoving:Connect(function(plr)
+	if workspace.PlayerPets:FindFirstChild(plr.Name) then
+		workspace.PlayerPets:FindFirstChild(plr.Name):Destroy()
+	end
+end)
