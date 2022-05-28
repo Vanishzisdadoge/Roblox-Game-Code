@@ -1,0 +1,34 @@
+local dataStoreService = game:GetService("DataStoreService")
+local dataStore = dataStoreService:GetDataStore("key1")
+
+game.Players.PlayerAdded:Connect(function(player)
+	local data = nil
+	
+	pcall(function()
+		data = dataStore:GetAsync(player.UserId.."Pets")
+	end)
+	
+	if data ~= nil then	
+		repeat wait(.1) until player:FindFirstChild("Pets")
+		for i, v in pairs(data) do
+			local val = Instance.new("StringValue")
+			val.Name = v
+			val.Parent = player.Pets
+		end
+	end
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+	local pets = {}
+	
+	for _, pet in pairs(player.Pets:GetChildren()) do
+		table.insert(pets, pet.Name)
+	end
+	pcall(function()
+		dataStore:SetAsync(player.UserId.."Pets", pets)
+	end)
+end)
+
+game:BindToClose(function()
+	wait(2)
+end)
