@@ -1,0 +1,87 @@
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local tweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Player = game.Players.LocalPlayer
+
+local eggShakeSpeed = 12
+local eggShakeSize = .5
+local eggShakeDuration = 3
+local eggFadeDuration = .8
+local petRotationSpeed = 5
+local petDisplayDuration = 3
+local petFadeSpeed = 0.8
+
+local camera = workspace.CurrentCamera
+local eggs = workspace:WaitForChild("Eggs")
+local Pets = ReplicatedStorage:WaitForChild("Pets")
+
+local egg_Connection;
+local petDisplayConnection; 
+
+local EggModule = {}
+
+function EggModule.Hatch_Egg(eggName, petName)
+	print(petName)
+	local eggMesh = eggs:FindFirstChild(eggName):FindFirstChild("Egg_Model")
+	if eggMesh ~= nil then
+		local clonedMesh = eggMesh:Clone()
+		clonedMesh.Parent = camera
+		
+		for _, obj in next, clonedMesh:GetDescendants() do
+			if obj:IsA("BasePart") or obj:IsA("UnionOperation") then 
+				obj.CanCollide = false
+				obj.CastShadow = false
+			elseif obj:IsA("ProximityPrompt") then
+				obj:Destroy()
+			end
+		end
+		
+		egg_Connection = RunService.RenderStepped:Connect(function()
+			local cf = CFrame.new(0,0,-clonedMesh.PrimaryPart.Size.Z*2) * CFrame.Angles(0,0,math.sin(time() * eggShakeSpeed) * eggShakeSize)
+			clonedMesh:SetPrimaryPartCFrame(camera.CFrame * cf)
+		end)
+		wait(eggShakeDuration)
+		for _, obj in next, clonedMesh:GetDescendants() do
+			if obj:IsA("BasePart") or obj:IsA("UnionOperation") then 
+				tweenService:Create(obj, TweenInfo.new(petFadeSpeed), {Transparency = 1}):Play()
+			end
+		end
+		wait(eggFadeDuration * 1.08)
+		egg_Connection:Disconnect()
+		clonedMesh:Destroy()
+		return petName
+	end
+end
+
+function EggModule.PetViewport(frame, clone)
+	local pet = clone
+	if pet ~= nil then
+		local clonedPet = pet:Clone()
+		clonedPet.Parent = frame
+		clonedPet:SetPrimaryPartCFrame(CFrame.new(0,0,0))
+		
+		local viewportCamera = Instance.new("Camera")
+		viewportCamera.Parent = frame
+		
+		frame.CurrentCamera = viewportCamera
+		
+		viewportCamera.CFrame = CFrame.new(0,0,clonedPet.PrimaryPart.Size.Z * 3)
+		
+		petDisplayConnection = RunService.RenderStepped:Connect(function()
+			clonedPet:SetPrimaryPartCFrame(clonedPet.PrimaryPart.CFrame * CFrame.Angles(0, math.rad(petRotationSpeed),0))
+		end)
+		wait(petDisplayDuration)
+		tweenService:Create(frame,TweenInfo.new(petFadeSpeed), {ImageTransparency = 1}):Play()
+		wait(petFadeSpeed*1.05)
+		petDisplayConnection:Disconnect()
+		viewportCamera:Destroy()
+		clonedPet:Destroy()
+		frame.Visible = false
+		frame.ImageTransparency = 0
+		frame.Parent.Spinner.Visible = false
+		
+	end
+end
+
+return EggModule
